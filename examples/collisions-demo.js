@@ -83,6 +83,11 @@ export class Body {
 		return points.arrays.position.some(p =>
 			intersect_test(T.times(p.to4(1)).to3(), leeway));
 	}
+
+
+	update_drawn_location(new_location) {
+		this.drawn_location = new_location;
+	}
 }
 
 
