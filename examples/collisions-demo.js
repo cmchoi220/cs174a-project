@@ -85,9 +85,6 @@ export class Body {
 	}
 
 
-	update_drawn_location(new_location) {
-		this.drawn_location = new_location;
-	}
 }
 
 

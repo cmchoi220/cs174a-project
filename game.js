@@ -27,6 +27,22 @@ export class Test_Data {
 	}
 }
 
+export class SolidBody extends Body {
+	constructor(shape, material, size) {
+		super(shape, material, size)
+	}
+
+	blend_state(alpha) {
+
+	}
+
+	emplace(location_matrix, linear_velocity, angular_velocity, spin_axis) {
+		let s = super.emplace(location_matrix, linear_velocity, angular_velocity, spin_axis);
+		this.drawn_location = this.drawn_location.times(Mat4.scale(...this.size));
+		return s;
+	}
+
+}
 
 export class Game extends Simulation {
 	// ** Inertia_Demo** demonstration: This scene lets random initial momentums
@@ -120,9 +136,8 @@ export class Game extends Simulation {
 		let norm_factor = Math.max(...b_center_wrt_a.map((n) => { return Math.abs(n) }));
 		b_center_wrt_a = b_center_wrt_a.map((n) => { return (Math.trunc(n / norm_factor)) });
 
-		// convert to standard basis? Not sure why we need to multiply by -1 (above)
-		return a.rotation.times(b_center_wrt_a).normalized();
-
+		// convert to standard basis? 
+		return a.drawn_location.times(b_center_wrt_a).normalized();
 
 	}
 
@@ -212,15 +227,11 @@ export class Game extends Simulation {
 			}
 
 
-			const d_angle = .0025;
-			const max_d_angle = .5;
+			// const d_angle = .005;
+			// const max_d_angle = .5;
 
-			this.theta = Math.max(-max_d_angle, Math.min(max_d_angle, this.theta + d_angle * this.key_presses[0]));
-			this.phi = Math.max(-max_d_angle, Math.min(max_d_angle, this.phi + d_angle * this.key_presses[1]));
-
-			console.log(b.drawn_location);
-
-			b.update_drawn_location(Mat4.rotation(this.theta, 1, 0, 0).times(Mat4.rotation(this.phi, 0, 0, 1)).times(b.drawn_location));
+			// this.theta = Math.max(-max_d_angle, Math.min(max_d_angle, this.theta + d_angle * this.key_presses[0]));
+			// this.phi = Math.max(-max_d_angle, Math.min(max_d_angle, this.phi + d_angle * this.key_presses[1]));
 
 			b.shape.draw(context, program_state, b.drawn_location, b.material);
 		}
@@ -245,19 +256,6 @@ export class Game extends Simulation {
 		const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
 
-		// Draw the platform:
-		// switch (this.level) {
-		// 	case 0:
-		// 		this.level0(context, program_state, t, dt);
-		// 		break;
-		// 	case 1:
-		// 		break;
-		// 	case 2:
-		// 		break;
-		// 	case 3:
-		// 		break;
-		// }
-
 		// Draw bounding boxes if enabled
 		this.show_boxes(context, program_state);
 
@@ -267,11 +265,11 @@ export class Game extends Simulation {
 		// EVERY OBJECT CREATED MUST BE PUT INTO THE LIST this.bodies FOR COLLISION DETECTION
 
 
-		this.bodies.push(new Body(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(50, 1, 50))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(50, 1, 50))
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		// this.bodies.push(new Body(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(1, 10, 10))
-		// 	.emplace(Mat4.translation(20, 10, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(1, 10, 10))
+			.emplace(Mat4.translation(20, 10, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 
 		// this.shapes.square.draw(context, program_state, Mat4.translation(0, -10, 0)
