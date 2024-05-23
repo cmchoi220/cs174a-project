@@ -42,6 +42,9 @@ export class SolidBody extends Body {
 		return s;
 	}
 
+	update_drawn_location(new_location) {
+		this.drawn_location = new_location;
+	}
 }
 
 export class Game extends Simulation {
@@ -227,11 +230,13 @@ export class Game extends Simulation {
 			}
 
 
-			// const d_angle = .005;
-			// const max_d_angle = .5;
+			const d_angle = .005;
+			const max_d_angle = .5;
 
 			// this.theta = Math.max(-max_d_angle, Math.min(max_d_angle, this.theta + d_angle * this.key_presses[0]));
 			// this.phi = Math.max(-max_d_angle, Math.min(max_d_angle, this.phi + d_angle * this.key_presses[1]));
+
+			b.update_drawn_location(Mat4.rotation(d_angle * this.key_presses[0], 1, 0, 0).times(Mat4.rotation(d_angle * this.key_presses[1], 0, 0, 1)).times(b.drawn_location));
 
 			b.shape.draw(context, program_state, b.drawn_location, b.material);
 		}
