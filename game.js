@@ -14,6 +14,8 @@ export class Test_Data {
 			grid: new Texture("assets/grid.png"),
 			stars: new Texture("assets/stars.png"),
 			text: new Texture("assets/text.png"),
+			// Basketball Court Texture
+			court: new Texture("assets/court.gif")
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
@@ -287,6 +289,49 @@ export class Game extends Simulation {
 	}
 
 	level1() {
+		// Base
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(50, 1, 50))
+			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		// Walls
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(29.5, 5, 1))
+			.emplace(Mat4.translation(0, 0, -29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+			.emplace(Mat4.translation(9.5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+			.emplace(Mat4.translation(-9.5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+			.emplace(Mat4.translation(29.5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+			.emplace(Mat4.translation(-29.5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
+			.emplace(Mat4.translation(19, 0, 29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
+			.emplace(Mat4.translation(-19, 0, 29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 10))
+			.emplace(Mat4.translation(9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 10))
+			.emplace(Mat4.translation(-9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
+			.emplace(Mat4.translation(0, 0, 49.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
+			.emplace(Mat4.translation(0, 0, -49.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
+			.emplace(Mat4.translation(49.5, 0, 0), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
+			.emplace(Mat4.translation(-49.5, 0, 0), vec3(0, 0, 0),0, vec3(1, 0, 0)));
 
 	}
 
