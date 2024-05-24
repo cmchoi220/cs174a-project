@@ -83,6 +83,8 @@ export class Body {
 		return points.arrays.position.some(p =>
 			intersect_test(T.times(p.to4(1)).to3(), leeway));
 	}
+
+
 }
 
 

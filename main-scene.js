@@ -11,6 +11,8 @@ import { Shadow_Demo } from "./examples/shadow-demo.js"
 import { Control_Demo } from "./examples/control-demo.js"
 import { Mouse_Demo } from "./examples/mouse-demo.js"
 
+import { Game } from "./game.js"
+
 // Pull these names into this module's scope for convenience:
 const {
 	Vector, Vector3, vec, vec3, vec4, color, Matrix, Mat4, Light, Shape, Material, Shader, Texture, Scene,
@@ -38,7 +40,8 @@ Object.assign(defs,
 	{ Transforms_Sandbox },
 	{ Shadow_Demo },
 	{ Mouse_Demo },
-	{ Control_Demo });
+	{ Control_Demo },
+	{ Game });
 
 // ******************** End extra step
 
@@ -46,7 +49,7 @@ Object.assign(defs,
 
 // const Main_Scene = Control_Demo;
 // const Main_Scene = Mouse_Demo;
-const Main_Scene = Inertia_Demo;
+const Main_Scene = Game;
 const Additional_Scenes = [];
 
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
