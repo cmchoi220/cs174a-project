@@ -44,9 +44,6 @@ export class SolidBody extends Body {
 		return s;
 	}
 
-	update_drawn_location(new_location) {
-		this.drawn_location = new_location;
-	}
 }
 
 export class Game extends Simulation {
@@ -61,8 +58,6 @@ export class Game extends Simulation {
 		this.shapes.square = new defs.Square();
 		this.shapes.cube = new defs.Cube();
 
-
-
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(.4, .8, .4, 1), ambient: .4, texture: this.data.textures.stars }),
@@ -70,11 +65,10 @@ export class Game extends Simulation {
 				{ color: color(0, 1, 0, .5), ambient: 1 }),
 		};
 
-
 		this.level_to_draw = this.level0;
 		this.level_loaded = false;
 
-		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .2 };
+		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1 };
 		this.show_bounding_boxes = true;
 
 		this.theta = 0;
@@ -156,30 +150,21 @@ export class Game extends Simulation {
 			this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
 				.emplace(Mat4.translation(...vec3(0, 25, 0)),
 					vec3(0, -1, 0).times(3), 0);
-			// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
-			// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
-			// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
-
 
 			this.bodies.push(this.ball);
 		}
 
 
-
-		// Gravity on Earth, where 1 unit in world space = 1 meter:
-		// this.ball.linear_velocity[1] += dt * -9.8;
-
 		// Reduce horizontal velocity
 		this.ball.linear_velocity[0] *= (1 - .005);
 		this.ball.linear_velocity[2] *= (1 - .005);
 
-		// If about to fall through floor, reverse y velocity:
-		// if (this.ball.center[1] < -8 && this.ball.linear_velocity[1] < 0)
-		// 	this.ball.linear_velocity[1] *= -.4;
 
-		const acceleration = vec3(0, -9.8 / 4, 0).times(dt);
+		const acceleration = vec3(0, -9.8 / 16, 0).times(dt);
+		this.ball.linear_velocity.add_by(acceleration);
 
-		// bounce of surface stuff
+		// bounce off surface stuff
+
 		this.ball.inverse = Mat4.inverse(this.ball.drawn_location);
 		for (let a of this.bodies) {
 			a.inverse = Mat4.inverse(a.drawn_location);
@@ -189,24 +174,57 @@ export class Game extends Simulation {
 				continue;
 			}
 
+
 			// normal of a that b hits
-			let n = this.get_normal_of_collision(a, this.ball);
+
+			let n = this.get_normal_of_collision(a, this.ball).to3();
 			// calculate new velocity r = v - 2(v.n)n
 			let v = this.ball.linear_velocity;
-			let r = v.minus(n.times(2 * v.dot(n)));
-			this.ball.linear_velocity = r.times(1 - .001);
+			console.log("init", v)
+			console.log("norm", n)
+			// vectors facing opposite directions
+			if (n.dot(v) < 0) {
+				let r = v.minus(n.times(2 * v.dot(n)));
+				this.ball.linear_velocity = r.times_pairwise([1 - .001, .2, 1 - .001]);
 
-			let acceleration_reflected = acceleration.minus(n.times(2 * acceleration.dot(n)));
-			this.ball.linear_velocity.add_by(acceleration_reflected.times(1 - .001))
+				// console.log("reflect", r)
+
+				let acceleration_reflected = acceleration.minus(n.times(2 * acceleration.dot(n)));
+				this.ball.linear_velocity.add_by(acceleration_reflected) //.times(1 - .001))
+				//console.log("accel", acceleration_reflected.plus(acceleration))
+			}
 
 
 
-			//this.ball.angular_velocity = Math.sqrt(r[0] * r[0] + r[2] * r[2]) / 20;
-			//this.ball.spin_axis = (r.cross(n)).normalized();
+			if (a == this.platform) {
+				// lever action thingy
+				const lever_force = .08;
+				let lever_velocity = vec3(0, 0, 0);
+				if (this.key_presses[1] == -1 && this.ball.center[0] < 0) // l
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt))
+				// else if (this.key_presses[1] == 1 && this.ball.center[0] > 0) // j
+				// 	lever_velocity.add_by(Mat4.rotation(this.phi, 0, 0, 1).times(vec3(0, 1, 0, 0).times(lever_force * Math.abs(this.ball.center[0]))).to3())
+				// if (this.key_presses[0] == -1 && this.ball.center[2] > 0) // i
+				// 	this.ball.linear_velocity.add_by(Mat4.rotation(this.theta, 0, 0, 1).times(vec3(0, 1, 0).times(lever_force * Math.abs(this.ball.center[2]))))
+				// else if (this.key_presses[0] == 1 && this.ball.center[2] < 0) // k
+				// 	this.ball.linear_velocity.add_by(Mat4.rotation(this.theta, 0, 0, 1).times(vec3(0, 1, 0).times(lever_force * Math.abs(this.ball.center[2]))))
 
+				//console.log("lever", lever_velocity);
+				this.ball.linear_velocity.add_by(lever_velocity);
+				//console.log("final", this.ball.linear_velocity);
+			}
 		}
 
-		this.ball.linear_velocity.add_by(acceleration);
+
+
+
+
+
+
+		// linear motion -> angular rotation?
+		//this.ball.angular_velocity = Math.sqrt(r[0] * r[0] + r[2] * r[2]) / 20;
+		//this.ball.spin_axis = (r.cross(n)).normalized();
+
 
 
 		// Delete ball if it strays too far away:
@@ -225,26 +243,44 @@ export class Game extends Simulation {
 		if (program_state.animate)
 			this.simulate(program_state.animation_delta_time);
 
+
+		const d_angle = .005;
+		const max_d_angle = .5;
+
+		// not max theta or min theta
+		if ((this.theta < max_d_angle && this.key_presses[0] == 1) || (this.theta > -max_d_angle && this.key_presses[0] == -1)) {
+			this.theta += d_angle * this.key_presses[0]
+		}
+		// not max phi or min phi
+		if ((this.phi < max_d_angle && this.key_presses[1] == 1) || (this.phi > -max_d_angle && this.key_presses[1] == -1)) {
+			this.phi += d_angle * this.key_presses[1]
+		}
+
+
+
+
 		for (let b of this.bodies) {
 			if (b == this.ball) {
 				b.shape.draw(context, program_state, b.drawn_location, b.material);
 				continue;
 			}
 
-
-			const d_angle = .005;
-			const max_d_angle = .5;
-
-			// this.theta = Math.max(-max_d_angle, Math.min(max_d_angle, this.theta + d_angle * this.key_presses[0]));
-			// this.phi = Math.max(-max_d_angle, Math.min(max_d_angle, this.phi + d_angle * this.key_presses[1]));
-
-			b.update_drawn_location(Mat4.rotation(d_angle * this.key_presses[0], 1, 0, 0).times(Mat4.rotation(d_angle * this.key_presses[1], 0, 0, 1)).times(b.drawn_location));
+			// not max theta or min theta
+			if ((this.theta < max_d_angle && this.key_presses[0] == 1) || (this.theta > -max_d_angle && this.key_presses[0] == -1)) {
+				b.drawn_location = Mat4.rotation(d_angle * this.key_presses[0], 1, 0, 0).times(b.drawn_location);
+			}
+			// not max phi or min phi
+			if ((this.phi < max_d_angle && this.key_presses[1] == 1) || (this.phi > -max_d_angle && this.key_presses[1] == -1)) {
+				b.drawn_location = Mat4.rotation(d_angle * this.key_presses[1], 0, 0, 1).times(b.drawn_location);
+			}
 
 			b.shape.draw(context, program_state, b.drawn_location, b.material);
+
 		}
 
 
 		if (this.level_loaded === false) {
+			//program_state.set_camera(Mat4.translation(0, -10, -70));
 			this.draw_level();
 			this.level_loaded = true;
 			this.theta = 0;
@@ -271,12 +307,15 @@ export class Game extends Simulation {
 	level0() {
 		// EVERY OBJECT CREATED MUST BE PUT INTO THE LIST this.bodies FOR COLLISION DETECTION
 
-
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(50, 1, 50))
-			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.platform = new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(50, 1, 50))
+			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.platform);
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(1, 10, 10))
 			.emplace(Mat4.translation(20, 10, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(10, 10, 1))
+			.emplace(Mat4.translation(20, 10, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 
 		// this.shapes.square.draw(context, program_state, Mat4.translation(0, -10, 0)
@@ -290,12 +329,13 @@ export class Game extends Simulation {
 
 	level1() {
 		// Base
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(50, 1, 50))
-			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.platform = new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(50, 1, 50))
+			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
+		this.bodies.push(this.platform);
 
 		// Walls
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(29.5, 5, 1))
-			.emplace(Mat4.translation(0, 0, -29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(0, 0, -29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
 			.emplace(Mat4.translation(9.5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
@@ -310,10 +350,10 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(-29.5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
-			.emplace(Mat4.translation(19, 0, 29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(19, 0, 29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
-			.emplace(Mat4.translation(-19, 0, 29.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(-19, 0, 29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 10))
 			.emplace(Mat4.translation(9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
@@ -322,16 +362,16 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(-9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
-			.emplace(Mat4.translation(0, 0, 49.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(0, 0, 49.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
-			.emplace(Mat4.translation(0, 0, -49.5), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(0, 0, -49.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
-			.emplace(Mat4.translation(49.5, 0, 0), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(49.5, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
-			.emplace(Mat4.translation(-49.5, 0, 0), vec3(0, 0, 0),0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(-49.5, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 	}
 
