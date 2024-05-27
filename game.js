@@ -14,8 +14,9 @@ export class Test_Data {
 			grid: new Texture("assets/grid.png"),
 			stars: new Texture("assets/stars.png"),
 			text: new Texture("assets/text.png"),
-			// Basketball Court Texture
-			court: new Texture("assets/court.gif")
+			// Basketball Court and Ball Textures
+			court: new Texture("assets/court.gif"),
+			basketball: new Texture("assets/basketball.gif")
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
@@ -102,8 +103,14 @@ export class Game extends Simulation {
 	}
 
 
-	ball_color() {
-		return this.materials.test.override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
+	general_ball_color() {
+		// return this.materials.test.override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
+		return this.materials.test.override(this.data.textures.stars);
+	}
+
+	level1_ball_color() {
+		// return this.materials.test.override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
+		return this.materials.test.override(this.data.textures.basketball);
 	}
 
 
@@ -153,13 +160,24 @@ export class Game extends Simulation {
 
 		// ball creation
 		if (this.ball === false) {
-			this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
-				.emplace(Mat4.translation(...vec3(0, 25, 0)),
-					vec3(0, -1, 0).times(3), 0);
-			// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
-			// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
-			// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
+			if (this.level_to_draw)
+				if (this.level_to_draw === this.level1) {
+					this.ball = new Body(this.shapes.ball, this.level1_ball_color(), vec3(1, 1, 1))
+						.emplace(Mat4.translation(...vec3(0, 25, 0)),
+							vec3(0, -1, 0).times(3), 0);
+					// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
+					// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
+					// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
+				}
+				else {
+					this.ball = new Body(this.shapes.ball, this.general_ball_color(), vec3(1, 1, 1))
+						.emplace(Mat4.translation(...vec3(0, 25, 0)),
+							vec3(0, -1, 0).times(3), 0);
+					// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
+					// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
+					// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
 
+				}
 
 			this.bodies.push(this.ball);
 		}
