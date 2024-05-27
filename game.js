@@ -123,17 +123,16 @@ export class Game extends Simulation {
 		if (!a.check_if_colliding(b, this.collider))
 			return vec4(0, 0, 0, 0);
 
-		if (this.collider.intersect_test == Body.intersect_sphere) {
-			return b.center.minus(a.center).normalized();
-		}
 
 		// standard basis to a-basis
 		const T = a.inverse.times(b.drawn_location, a.temp_matrix);
 
-		let b_center_wrt_a = T.times(b.center.to4(1)).to3();
+
+		let b_center_wrt_a = T.times((b.center.minus(a.center)).to4(1)).to3();
 
 		let norm_factor = Math.max(...b_center_wrt_a.map((n) => { return Math.abs(n) }));
 		b_center_wrt_a = b_center_wrt_a.map((n) => { return (Math.trunc(n / norm_factor)) });
+
 
 		// convert to standard basis? 
 		return a.drawn_location.times(b_center_wrt_a).normalized();
@@ -160,7 +159,7 @@ export class Game extends Simulation {
 		this.ball.linear_velocity[2] *= (1 - .005);
 
 
-		const acceleration = vec3(0, -9.8 / 16, 0).times(dt);
+		const acceleration = vec3(0, -9.8 / 10, 0).times(dt);
 		this.ball.linear_velocity.add_by(acceleration);
 
 		// bounce off surface stuff
@@ -180,18 +179,15 @@ export class Game extends Simulation {
 			let n = this.get_normal_of_collision(a, this.ball).to3();
 			// calculate new velocity r = v - 2(v.n)n
 			let v = this.ball.linear_velocity;
-			console.log("init", v)
-			console.log("norm", n)
+
 			// vectors facing opposite directions
 			if (n.dot(v) < 0) {
 				let r = v.minus(n.times(2 * v.dot(n)));
-				this.ball.linear_velocity = r.times_pairwise([1 - .001, .2, 1 - .001]);
+				this.ball.linear_velocity = r.times_pairwise([1 - .005, .2, 1 - .005]);
 
-				// console.log("reflect", r)
 
 				let acceleration_reflected = acceleration.minus(n.times(2 * acceleration.dot(n)));
 				this.ball.linear_velocity.add_by(acceleration_reflected) //.times(1 - .001))
-				//console.log("accel", acceleration_reflected.plus(acceleration))
 			}
 
 
@@ -202,16 +198,14 @@ export class Game extends Simulation {
 				let lever_velocity = vec3(0, 0, 0);
 				if (this.key_presses[1] == -1 && this.ball.center[0] < 0) // l
 					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt))
-				// else if (this.key_presses[1] == 1 && this.ball.center[0] > 0) // j
-				// 	lever_velocity.add_by(Mat4.rotation(this.phi, 0, 0, 1).times(vec3(0, 1, 0, 0).times(lever_force * Math.abs(this.ball.center[0]))).to3())
-				// if (this.key_presses[0] == -1 && this.ball.center[2] > 0) // i
-				// 	this.ball.linear_velocity.add_by(Mat4.rotation(this.theta, 0, 0, 1).times(vec3(0, 1, 0).times(lever_force * Math.abs(this.ball.center[2]))))
-				// else if (this.key_presses[0] == 1 && this.ball.center[2] < 0) // k
-				// 	this.ball.linear_velocity.add_by(Mat4.rotation(this.theta, 0, 0, 1).times(vec3(0, 1, 0).times(lever_force * Math.abs(this.ball.center[2]))))
+				else if (this.key_presses[1] == 1 && this.ball.center[0] > 0) // j
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt))
+				if (this.key_presses[0] == -1 && this.ball.center[2] > 0) // i
+					this.ball.linear_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt))
+				else if (this.key_presses[0] == 1 && this.ball.center[2] < 0) // k
+					this.ball.linear_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt))
 
-				//console.log("lever", lever_velocity);
 				this.ball.linear_velocity.add_by(lever_velocity);
-				//console.log("final", this.ball.linear_velocity);
 			}
 		}
 
@@ -280,7 +274,7 @@ export class Game extends Simulation {
 
 
 		if (this.level_loaded === false) {
-			//program_state.set_camera(Mat4.translation(0, -10, -70));
+			program_state.set_camera(Mat4.look_at(vec3(0, 60, 100), vec3(0, 0, 0), vec3(0, 1, 0)));
 			this.draw_level();
 			this.level_loaded = true;
 			this.theta = 0;
