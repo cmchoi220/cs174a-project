@@ -16,17 +16,12 @@ export class Test_Data {
 			text: new Texture("assets/text.png"),
 			// Basketball Court and Ball Textures
 			court: new Texture("assets/court.gif"),
-			basketball: new Texture("assets/basketball.gif")
+			basketball: new Texture("assets/basketball.gif"),
+			ring: new Texture("assets/ring.png"),
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
 		};
-	}
-
-	random_shape(shape_list = this.shapes) {
-		// random_shape():  Extract a random shape from this.shapes.
-		const shape_names = Object.keys(shape_list);
-		return shape_list[shape_names[~~(shape_names.length * Math.random())]]
 	}
 }
 
@@ -58,19 +53,32 @@ export class Game extends Simulation {
 		this.shapes = Object.assign({}, this.data.shapes);
 		this.shapes.square = new defs.Square();
 		this.shapes.cube = new defs.Cube();
+		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
 
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(.4, .8, .4, 1), ambient: .4, texture: this.data.textures.stars }),
 			bright: new Material(new defs.Phong_Shader(1),
 				{ color: color(0, 1, 0, .5), ambient: 1 }),
+			basketball: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.basketball }),
+			court: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.court }),
+			ring: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.8, diffusivity: 0.4, specularity: 0.1, texture: this.data.textures.ring }),
+			dark_ground: new Material(new defs.Phong_Shader(),
+				{ color: color(0.4, 0.4, 0.4, 1), ambient: 0.2, diffusivity: 1, specularity: 1 }),
+			dark_ball: new Material(new defs.Phong_Shader(),
+				{ color: color(1, 1, 1, 1), ambient: 1, diffusivity: 1, specularity: 1 }),
+
 		};
 
-		this.level_to_draw = this.level0;
+		this.level_to_draw = this.level1;
 		this.level_loaded = false;
+		this.ball_color = this.general_ball_color;
 
 		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1 };
-		this.show_bounding_boxes = true;
+		this.show_bounding_boxes = false;
 
 		this.theta = 0;
 		this.phi = 0;
@@ -86,11 +94,12 @@ export class Game extends Simulation {
 		this.key_triggered_button("Rotate Right", ["l"], () => { this.key_presses[1] = -1; }, undefined, () => { this.key_presses[1] = 0; });
 
 		this.key_triggered_button("Show collision boxes", ["p"], () => { this.show_bounding_boxes = !this.show_bounding_boxes; });
+		this.key_triggered_button("Reset current level", [";"], () => { this.level_loaded = false; });
 
-		this.key_triggered_button("Level 0", ["0"], () => { this.level_to_draw = this.level0; this.level_loaded = false; });
-		this.key_triggered_button("Level 1", ["1"], () => { this.level_to_draw = this.level1; this.level_loaded = false; });
-		this.key_triggered_button("Level 2", ["2"], () => { this.level_to_draw = this.level2; this.level_loaded = false; });
-		this.key_triggered_button("Level 3", ["3"], () => { this.level_to_draw = this.level3; this.level_loaded = false; });
+		this.key_triggered_button("Level 0", ["0"], () => { this.level_to_draw = this.level0; this.ball_color = this.general_ball_color; this.level_loaded = false; });
+		this.key_triggered_button("Level 1", ["1"], () => { this.level_to_draw = this.level1; this.ball_color = this.level1_ball_color; this.level_loaded = false; });
+		this.key_triggered_button("Level 2", ["2"], () => { this.level_to_draw = this.level2; this.ball_color = this.level2_ball_color; this.level_loaded = false; });
+		this.key_triggered_button("Level 3", ["3"], () => { this.level_to_draw = this.level3; this.ball_color = this.level3_ball_color; this.level_loaded = false; });
 
 		this.new_line();
 		super.make_control_panel();
@@ -103,8 +112,15 @@ export class Game extends Simulation {
 	}
 
 	level1_ball_color() {
-		// return this.materials.test.override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
-		return this.materials.test.override(this.data.textures.basketball);
+		return this.materials.basketball;
+	}
+
+	level2_ball_color() {
+		return this.materials.dark_ball;
+	}
+
+	level3_ball_color() {
+		return this.materials.test.override(this.data.textures.stars);
 	}
 
 
@@ -130,10 +146,8 @@ export class Game extends Simulation {
 		if (!a.check_if_colliding(b, this.collider))
 			return vec4(0, 0, 0, 0);
 
-
 		// standard basis to a-basis
 		const T = a.inverse.times(b.drawn_location, a.temp_matrix);
-
 
 		let b_center_wrt_a = T.times((b.center.minus(a.center)).to4(1)).to3();
 
@@ -153,24 +167,8 @@ export class Game extends Simulation {
 
 		// ball creation
 		if (this.ball === false) {
-			if (this.level_to_draw)
-				if (this.level_to_draw === this.level1) {
-					this.ball = new Body(this.shapes.ball, this.level1_ball_color(), vec3(1, 1, 1))
-						.emplace(Mat4.translation(...vec3(0, 25, 0)),
-							vec3(0, -1, 0).times(3), 0);
-					// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
-					// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
-					// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
-				}
-				else {
-					this.ball = new Body(this.shapes.ball, this.general_ball_color(), vec3(1, 1, 1))
-						.emplace(Mat4.translation(...vec3(0, 25, 0)),
-							vec3(0, -1, 0).times(3), 0);
-					// this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
-					// 	.emplace(Mat4.translation(...vec3(0, 15, 0).randomized(10)),
-					// 		vec3(0, -1, 0).randomized(2).normalized().times(3), Math.random());
-
-				}
+			this.ball = new Body(this.shapes.ball, this.ball_color(), vec3(1, 1, 1))
+				.emplace(Mat4.translation(...vec3(0, 25, 0)), vec3(0, -1, 0).times(3), 0);
 
 			this.bodies.push(this.ball);
 		}
@@ -195,9 +193,24 @@ export class Game extends Simulation {
 				continue;
 			}
 
+			if (a == this.goal && this.level_loaded == true) {
+				switch (this.level_to_draw) {
+					case this.level0:
+						this.level_to_draw = this.level1; this.ball_color = this.level1_ball_color; this.level_loaded = false;
+						break;
+					case this.level1:
+						this.level_to_draw = this.level2; this.ball_color = this.level2_ball_color; this.level_loaded = false;
+						break;
+					case this.level2:
+						this.level_to_draw = this.level3; this.ball_color = this.level3_ball_color; this.level_loaded = false;
+						break;
+					default:
+						this.level_to_draw = this.level0; this.ball_color = this.level3_ball_color; this.level_loaded = false;
+				}
+				break;
+			}
 
 			// normal of a that b hits
-
 			let n = this.get_normal_of_collision(a, this.ball).to3();
 			// calculate new velocity r = v - 2(v.n)n
 			let v = this.ball.linear_velocity;
@@ -206,7 +219,6 @@ export class Game extends Simulation {
 			if (n.dot(v) < 0) {
 				let r = v.minus(n.times(2 * v.dot(n)));
 				this.ball.linear_velocity = r.times_pairwise([1 - .005, .2, 1 - .005]);
-
 
 				let acceleration_reflected = acceleration.minus(n.times(2 * acceleration.dot(n)));
 				this.ball.linear_velocity.add_by(acceleration_reflected) //.times(1 - .001))
@@ -219,13 +231,13 @@ export class Game extends Simulation {
 				const lever_force = .08;
 				let lever_velocity = vec3(0, 0, 0);
 				if (this.key_presses[1] == -1 && this.ball.center[0] < 0) // l
-					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt))
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt * (2 - Math.abs(this.ball.center[0]) / 45)))
 				else if (this.key_presses[1] == 1 && this.ball.center[0] > 0) // j
-					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt))
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[0]) * dt * (2 - Math.abs(this.ball.center[0]) / 45)))
 				if (this.key_presses[0] == -1 && this.ball.center[2] > 0) // i
-					this.ball.linear_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt))
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt * (2 - Math.abs(this.ball.center[2]) / 45)))
 				else if (this.key_presses[0] == 1 && this.ball.center[2] < 0) // k
-					this.ball.linear_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt))
+					lever_velocity.add_by(n.times(lever_force * Math.abs(this.ball.center[2]) * dt * (2 - Math.abs(this.ball.center[2]) / 45)))
 
 				this.ball.linear_velocity.add_by(lever_velocity);
 			}
@@ -273,8 +285,6 @@ export class Game extends Simulation {
 		}
 
 
-
-
 		for (let b of this.bodies) {
 			if (b == this.ball) {
 				b.shape.draw(context, program_state, b.drawn_location, b.material);
@@ -306,14 +316,25 @@ export class Game extends Simulation {
 		if (!context.scratchpad.controls) {
 			this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
 			this.children.push(new defs.Program_State_Viewer());
-			program_state.set_camera(Mat4.translation(0, -10, -70));    // Locate the camera here (inverted matrix).
+			program_state.set_camera(Mat4.look_at(vec3(0, 60, 100), vec3(0, 0, 0), vec3(0, 1, 0)));
+			//program_state.set_camera(Mat4.translation(0, -10, -70));    // Locate the camera here (inverted matrix).
 		}
 
-		program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 1, 500);
-		program_state.lights = [new Light(vec4(0, -5, -10, 1), color(1, 1, 1, 1), 100000)];
-
 		const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+		program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 1, 500);
 
+		// fancy lighting
+		if (this.level_to_draw == this.level2 && this.ball) {
+			let displacement = 10 * Math.sin(t * Math.PI / 2)
+			program_state.lights = [
+				new Light(vec4(-20, -5, displacement, 1), color(1, 1, 1, 1), 800),
+				new Light(vec4(20, -5, -displacement, 1), color(1, 1, 1, 1), 800),
+				new Light(vec4(0, -5, -10, 1), color(1, 1, 1, 1), 10000)
+			];
+		}
+		else {
+			program_state.lights = [new Light(vec4(0, -5, -10, 1), color(1, 1, 1, 1), 100000)];
+		}
 
 		// Draw bounding boxes if enabled
 		this.show_boxes(context, program_state);
@@ -327,72 +348,102 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.platform);
 
+		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
+			.emplace(Mat4.translation(-20, 4, 20).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.goal);
+
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(1, 10, 10))
 			.emplace(Mat4.translation(20, 10, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.earth), vec3(10, 10, 1))
 			.emplace(Mat4.translation(20, 10, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-
-
-		// this.shapes.square.draw(context, program_state, Mat4.translation(0, -10, 0)
-		// .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
-		// .times(Mat4.rotation(this.theta, 1, 0, 0))
-		// .times(Mat4.rotation(this.phi, 0, 1, 0))
-		// .times(Mat4.scale(50, 50, 1)),
-		// this.materials.test.override(this.data.textures.earth));
-
 	}
 
 	level1() {
 		// Base
-		this.platform = new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(50, 1, 50))
+		this.platform = new SolidBody(this.shapes.cube, this.materials.court, vec3(50, 1, 50))
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
 		// Walls
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(29.5, 5, 1))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(29.5, 5, 1))
 			.emplace(Mat4.translation(0, 0, -29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 19.5))
 			.emplace(Mat4.translation(9.5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 19.5))
 			.emplace(Mat4.translation(-9.5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 19.5))
 			.emplace(Mat4.translation(29.5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 19.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 19.5))
 			.emplace(Mat4.translation(-29.5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(10, 5, 1))
 			.emplace(Mat4.translation(19, 0, 29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(10, 5, 1))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(10, 5, 1))
 			.emplace(Mat4.translation(-19, 0, 29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 10))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 10))
 			.emplace(Mat4.translation(9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 10))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 10))
 			.emplace(Mat4.translation(-9.5, 0, 39), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(49.5, 5, 1))
 			.emplace(Mat4.translation(0, 0, 49.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(49.5, 5, 1))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(49.5, 5, 1))
 			.emplace(Mat4.translation(0, 0, -49.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 49.5))
 			.emplace(Mat4.translation(49.5, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.test.override(this.data.textures.court), vec3(1, 5, 49.5))
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(1, 5, 49.5))
 			.emplace(Mat4.translation(-49.5, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 	}
 
 	level2() {
+		this.platform = new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(50, 1, 50))
+			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.platform);
 
+		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
+			.emplace(Mat4.translation(-32, 4, 32).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.goal);
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 50))
+			.emplace(Mat4.translation(50 - 1, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 50))
+			.emplace(Mat4.translation(-50 + 1, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(50, 5, 1))
+			.emplace(Mat4.translation(0, 0, 50 - 1), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(50, 5, 1))
+			.emplace(Mat4.translation(0, 0, -50 + 1), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 35))
+			.emplace(Mat4.translation(25, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 35))
+			.emplace(Mat4.translation(-25, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(35, 5, 1))
+			.emplace(Mat4.translation(0, 0, 25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(16, 5, 1))
+			.emplace(Mat4.translation(8, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(8, 5, 1))
+			.emplace(Mat4.translation(0, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 10))
+			.emplace(Mat4.translation(7, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 17))
+			.emplace(Mat4.translation(-7, 0, 7), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(7, 5, 1))
+			.emplace(Mat4.translation(-42, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 	}
 
 	level3() {
