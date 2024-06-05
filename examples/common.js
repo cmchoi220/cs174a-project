@@ -331,11 +331,32 @@ const Regular_2D_Polygon = defs.Regular_2D_Polygon =
         }
     }
 
+const FortyFiveDegree2D_Polygon = defs.FortyFiveDegree2D_Polygon =
+    class FortyFiveDegree2D_Polygon extends Surface_Of_Revolution {
+        // Approximates a 45-degree arc of a flat disk
+        constructor(rows, columns) {
+            // Vector3.cast([0, 0, 0], [1, 0, 0]) defines the radial line from the origin to the edge of the circle
+            super(rows, columns, Vector3.cast([0, 0, 0], [1, 0, 0]), undefined, Math.PI / 4);  // Math.PI / 4 radians equals 45 degrees
+            this.arrays.normal = this.arrays.normal.map(x => vec3(0, 0, 1));
+            this.arrays.texture_coord.forEach((x, i, a) => a[i] = this.arrays.position[i].map(x => x / 2 + .5).slice(0, 2));
+        }
+    }
+
 const Cylindrical_Tube = defs.Cylindrical_Tube =
     class Cylindrical_Tube extends Surface_Of_Revolution {
         // An open tube shape with equally sized sections, pointing down Z locally.
         constructor(rows, columns, texture_range) {
             super(rows, columns, Vector3.cast([1, 0, .5], [1, 0, -.5]), texture_range);
+        }
+    }
+
+const FortyFiveDegreeCylindrical_Tube = defs.FortyFiveDegreeCylindrical_Tube =
+    class FortyFiveDegreeCylindrical_Tube extends Surface_Of_Revolution {
+        // A 45-degree open tube shape with equally sized sections, pointing down Z locally.
+        constructor(rows, columns, texture_range) {
+            // Vector3.cast([1, 0, .5], [1, 0, -.5]) defines the circular cross-section of the tube.
+            // The last parameter, Math.PI / 4, sets the total curvature angle to 45 degrees.
+            super(rows, columns, Vector3.cast([1, 0, .5], [1, 0, -.5]), texture_range, Math.PI / 4);
         }
     }
 

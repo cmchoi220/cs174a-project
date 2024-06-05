@@ -18,7 +18,9 @@ export class Test_Data {
 			court: new Texture("assets/court.gif"),
 			basketball: new Texture("assets/basketball.gif"),
 			ring: new Texture("assets/ring.png"),
-			mouse: new Texture("assets/biggiecheese.jpeg")
+			mouse: new Texture("assets/biggiecheese.jpeg"),
+			mysunshine: new Texture("assets/mysunshine.jpeg"),
+			cheese1: new Texture("assets/cheese_1.jpeg")
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
@@ -55,6 +57,9 @@ export class Game extends Simulation {
 		this.shapes.square = new defs.Square();
 		this.shapes.cube = new defs.Cube();
 		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
+		this.shapes.circle = new defs.Regular_2D_Polygon(16, 16);
+		this.shapes.arc = new defs.FortyFiveDegree2D_Polygon(16, 16);
+		this.shapes.curvededge = new defs.FortyFiveDegreeCylindrical_Tube(1,1);
 
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
@@ -75,6 +80,10 @@ export class Game extends Simulation {
 				{ color: color(0.98, 0.98, 0.98, 1), ambient: 0.8, diffusivity: 1, specularity: 0 }),
 			mouse: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mouse }),
+			mysunshine: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mysunshine }),
+			cheese1: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.cheese1 }),
 
 		};
 
@@ -370,9 +379,13 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
+		// Goal with Lebron wearing it like a crown
 		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
 			.emplace(Mat4.translation(21, 4, 39).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.goal);
+
+		this.bodies.push(new SolidBody(this.shapes.circle, this.materials.mysunshine, vec3(3, 3, 3))
+			.emplace(Mat4.translation(21, 4, 39).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		// Walls
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(29.5, 5, 1))
@@ -461,9 +474,22 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
-		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
-			.emplace(Mat4.translation(25, 4, -45).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		// Goal being a block of cheese
+		// Bottom
+		this.goal = new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(25, 1.5, -45).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.goal);
+		// Top
+		this.bodies.push(new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(25, 6.5, -45).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Curved Edge
+		this.bodies.push(new SolidBody(this.shapes.curvededge, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(25, 4, -45).times(Mat4.rotation(Math.PI/4, 0, 1, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Other Two Edges
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+			.emplace(Mat4.translation(27.5, 4, -45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+			.emplace(Mat4.translation(26.75, 4, -46.75).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		// Horizontal Walls
 
@@ -545,7 +571,6 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(45, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(45, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-
 
 		// Vertical Walls
 
