@@ -20,7 +20,8 @@ export class Test_Data {
 			ring: new Texture("assets/ring.png"),
 			mouse: new Texture("assets/biggiecheese.jpeg"),
 			mysunshine: new Texture("assets/mysunshine.jpeg"),
-			cheese1: new Texture("assets/cheese_1.jpeg")
+			cheese1: new Texture("assets/cheese_1.jpeg"),
+			wood: new Texture("assets/wood.jpg"),
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
@@ -59,7 +60,7 @@ export class Game extends Simulation {
 		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
 		this.shapes.circle = new defs.Regular_2D_Polygon(16, 16);
 		this.shapes.arc = new defs.FortyFiveDegree2D_Polygon(16, 16);
-		this.shapes.curvededge = new defs.FortyFiveDegreeCylindrical_Tube(1,1);
+		this.shapes.curvededge = new defs.FortyFiveDegreeCylindrical_Tube(1, 1);
 
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
@@ -84,12 +85,16 @@ export class Game extends Simulation {
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mysunshine }),
 			cheese1: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.cheese1 }),
+			wood: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(.4, .4, .4, 1), ambient: 0.3, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.wood }),
+			wood2: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.wood }),
 
 		};
 
 		this.level_to_draw = this.level1;
 		this.level_loaded = false;
-		this.ball_color = this.general_ball_color;
+		this.ball_color = this.level1_ball_color;
 
 		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1 };
 		this.show_bounding_boxes = false;
@@ -219,7 +224,7 @@ export class Game extends Simulation {
 						this.level_to_draw = this.level3; this.ball_color = this.level3_ball_color; this.level_loaded = false;
 						break;
 					default:
-						this.level_to_draw = this.level0; this.ball_color = this.general_ball_color(); this.level_loaded = false;
+						this.level_to_draw = this.level0; this.ball_color = this.general_ball_color; this.level_loaded = false;
 				}
 				break;
 			}
@@ -470,7 +475,7 @@ export class Game extends Simulation {
 
 	level3() {
 		// Base
-		this.platform = new SolidBody(this.shapes.cube, this.materials.light_ground, vec3(50, 1, 50))
+		this.platform = new SolidBody(this.shapes.cube, this.materials.wood, vec3(50, 1, 50))
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
@@ -484,11 +489,11 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(25, 6.5, -45).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		// Curved Edge
 		this.bodies.push(new SolidBody(this.shapes.curvededge, this.materials.cheese1, vec3(5, 5, 5))
-			.emplace(Mat4.translation(25, 4, -45).times(Mat4.rotation(Math.PI/4, 0, 1, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+			.emplace(Mat4.translation(25, 4, -45).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		// Other Two Edges
-		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5 / 2, 5 / 2, 1))
 			.emplace(Mat4.translation(27.5, 4, -45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5 / 2, 5 / 2, 1))
 			.emplace(Mat4.translation(26.75, 4, -46.75).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		// Horizontal Walls
