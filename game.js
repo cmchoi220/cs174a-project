@@ -479,6 +479,7 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
+		/*
 		// Goal being a block of cheese
 		// Bottom
 		this.goal = new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
@@ -495,6 +496,24 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(27.5, 4, -45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5 / 2, 5 / 2, 1))
 			.emplace(Mat4.translation(26.75, 4, -46.75).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		 */
+
+		// Goal being a block of cheese
+		// Bottom
+		this.goal = new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(15, 1.5, -25).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.goal);
+		// Top
+		this.bodies.push(new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(15, 6.5, -25).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Curved Edge
+		this.bodies.push(new SolidBody(this.shapes.curvededge, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(15, 4, -25).times(Mat4.rotation(Math.PI/4, 0, 1, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Other Two Edges
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+			.emplace(Mat4.translation(17.5, 4, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5/2, 5/2, 1))
+			.emplace(Mat4.translation(16.75, 4, -26.75).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		// Horizontal Walls
 
@@ -522,8 +541,8 @@ export class Game extends Simulation {
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(-15, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
-			.emplace(Mat4.translation(-15, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
+			//.emplace(Mat4.translation(-15, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(-15, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
@@ -551,9 +570,13 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(15, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(15, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
+			.emplace(Mat4.translation(15, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(25, 0, 20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(25, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
@@ -567,8 +590,8 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(35, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(35, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
-			.emplace(Mat4.translation(35, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
+			//.emplace(Mat4.translation(35, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(35, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
@@ -612,8 +635,8 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(-20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(0, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
-		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
-			.emplace(Mat4.translation(20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
+			//.emplace(Mat4.translation(20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(-40, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
@@ -645,6 +668,8 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(-40, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(-30, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(-10, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
