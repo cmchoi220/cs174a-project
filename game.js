@@ -223,6 +223,9 @@ export class Game extends Simulation {
 					case this.level2:
 						this.level_to_draw = this.level3; this.ball_color = this.level3_ball_color; this.level_loaded = false;
 						break;
+					case this.level3:
+						this.level_to_draw = this.level1; this.ball_color = this.level1_ball_color; this.level_loaded = false;
+						break;
 					default:
 						this.level_to_draw = this.level0; this.ball_color = this.general_ball_color; this.level_loaded = false;
 				}
@@ -523,7 +526,7 @@ export class Game extends Simulation {
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(-15, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
-			//.emplace(Mat4.translation(-15, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//.emplace(Mat4.translation(-15, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(-15, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
@@ -572,7 +575,7 @@ export class Game extends Simulation {
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(35, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
-			//.emplace(Mat4.translation(35, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//.emplace(Mat4.translation(35, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
 			.emplace(Mat4.translation(35, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
@@ -617,7 +620,7 @@ export class Game extends Simulation {
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(0, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
-			//.emplace(Mat4.translation(20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//.emplace(Mat4.translation(20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 5))
 			.emplace(Mat4.translation(-40, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
