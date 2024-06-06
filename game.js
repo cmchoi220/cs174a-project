@@ -54,6 +54,7 @@ export class Game extends Simulation {
 		this.shapes.square = new defs.Square();
 		this.shapes.cube = new defs.Cube();
 		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
+		this.shapes.sphere = new defs.Subdivision_Sphere(1);
 
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
@@ -70,7 +71,8 @@ export class Game extends Simulation {
 				{ color: color(0.4, 0.4, 0.4, 1), ambient: 0.2, diffusivity: 1, specularity: 1 }),
 			dark_ball: new Material(new defs.Phong_Shader(),
 				{ color: color(1, 1, 1, 1), ambient: 1, diffusivity: 1, specularity: 1 }),
-
+			gem: new Material(new defs.Phong_Shader(),
+				{ color: color(1, 0, 0, .9), ambient: .4, diffusivity: 1, specularity: 1 }),
 		};
 
 		this.level_to_draw = this.level1;
@@ -79,6 +81,7 @@ export class Game extends Simulation {
 
 		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1 };
 		this.show_bounding_boxes = false;
+		this.bonus_balls = 0;
 
 		this.theta = 0;
 		this.phi = 0;
@@ -108,7 +111,7 @@ export class Game extends Simulation {
 
 	general_ball_color() {
 		// return this.materials.test.override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
-		return this.materials.test.override(this.data.textures.stars);
+		return this.materials.test.override(this.data.textures.stars).override(color(.6, .6 * Math.random(), .6 * Math.random(), 1));
 	}
 
 	level1_ball_color() {
@@ -173,6 +176,13 @@ export class Game extends Simulation {
 			this.bodies.push(this.ball);
 		}
 
+		if (this.bonus_balls > 0) {
+			this.bodies.push(new Body(this.shapes.ball, this.general_ball_color(), vec3(1 + Math.random(), 1 + Math.random(), 1 + Math.random()))
+				.emplace(Mat4.translation(...vec3(5 * (Math.random() - .5), 25, 5 * (Math.random() - .5))),
+					vec3(5 * (Math.random() - .5), 3 * (Math.random() - .7), 5 * (Math.random() - .5)).times(3), 0));
+			this.bonus_balls--;
+		}
+
 
 		// Reduce horizontal velocity
 		this.ball.linear_velocity[0] *= (1 - .005);
@@ -186,6 +196,11 @@ export class Game extends Simulation {
 
 		this.ball.inverse = Mat4.inverse(this.ball.drawn_location);
 		for (let a of this.bodies) {
+
+			if (a.center.norm() > 100) {
+				this.bodies = this.bodies.filter(b => b != a);
+			}
+
 			a.inverse = Mat4.inverse(a.drawn_location);
 			// Pass the two bodies and the collision shape to check_if_colliding():
 			// Checks if a vertex of b is inside a.
@@ -207,6 +222,7 @@ export class Game extends Simulation {
 					default:
 						this.level_to_draw = this.level0; this.ball_color = this.level3_ball_color; this.level_loaded = false;
 				}
+				this.bonus_balls = 20;
 				break;
 			}
 
@@ -223,8 +239,6 @@ export class Game extends Simulation {
 				let acceleration_reflected = acceleration.minus(n.times(2 * acceleration.dot(n)));
 				this.ball.linear_velocity.add_by(acceleration_reflected) //.times(1 - .001))
 			}
-
-
 
 			if (a == this.platform) {
 				// lever action thingy
@@ -412,8 +426,8 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.platform);
 
-		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
-			.emplace(Mat4.translation(-32, 4, 32).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.goal = new SolidBody(this.shapes.sphere, this.materials.gem, vec3(3, 3, 3))
+			.emplace(Mat4.translation(-32, 4, 32), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.goal);
 
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(1, 5, 50))
