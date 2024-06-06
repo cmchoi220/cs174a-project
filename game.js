@@ -177,9 +177,9 @@ export class Game extends Simulation {
 		}
 
 		if (this.bonus_balls > 0) {
-			this.bodies.push(new Body(this.shapes.ball, this.general_ball_color(), vec3(1 + Math.random(), 1 + Math.random(), 1 + Math.random()))
+			this.bodies.push(new Body(this.shapes.square, this.general_ball_color(), vec3(1 + Math.random(), 1 + 2 * Math.random(), 1 + Math.random()))
 				.emplace(Mat4.translation(...vec3(5 * (Math.random() - .5), 25, 5 * (Math.random() - .5))),
-					vec3(5 * (Math.random() - .5), 3 * (Math.random() - .7), 5 * (Math.random() - .5)).times(3), 0));
+					vec3(5 * (Math.random() - .5), 3 * (Math.random() - .7), 5 * (Math.random() - .5)).times(3), 2));
 			this.bonus_balls--;
 		}
 
