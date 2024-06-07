@@ -825,6 +825,49 @@ const Fake_Bump_Map = defs.Fake_Bump_Map =
     }
 
 
+const Realistic_Bump_Map = defs.Realistic_Bump_Map =
+    class Realistic_Bump_Map extends Textured_Phong {
+        // Override the fragment shader to use the normal map for normal perturbation.
+        fragment_glsl_code() {
+            return this.shared_glsl_code() + `
+                varying vec2 f_tex_coord;
+                uniform sampler2D texture;   // The color texture
+                uniform sampler2D normal_map; // The normal map
+    
+                void main(){
+                    // Sample the normal map in the correct place:
+                    vec3 tex_normal = texture2D( normal_map, f_tex_coord ).rgb;
+                    
+                    // Transform normal from [0,1] range to [-1,1] (the normal map is usually stored in a way that (0.5, 0.5, 1.0)
+                    // is mapped to (0, 0, 1) in normal space, which corresponds to no perturbation).
+                    vec3 bumped_N = normalize(2.0 * tex_normal - 1.0);
+    
+                    // Sample the texture image in the correct place:
+                    vec4 tex_color = texture2D( texture, f_tex_coord );
+                    if( tex_color.w < .01 ) discard;
+    
+                    // Compute an initial (ambient) color:
+                    gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                    // Compute the final color with contributions from lights:
+                    gl_FragColor.xyz += phong_model_lights( bumped_N, vertex_worldspace );
+                }`;
+        }
+
+        // Make sure to bind and activate the normal map texture in the update_GPU method.
+        update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
+            // First call the base class method
+            super.update_GPU(context, gpu_addresses, gpu_state, model_transform, material);
+
+            if(material.normal_map && material.normal_map.ready) {
+                // Assuming texture unit 1 is available and not conflicting with other textures.
+                context.activeTexture(context.TEXTURE1);
+                context.bindTexture(context.TEXTURE_2D, material.normal_map.id);
+                context.uniform1i(gpu_addresses.normal_map, 1);
+            }
+        }
+    }
+
+
 const Movement_Controls = defs.Movement_Controls =
     class Movement_Controls extends Scene {
         // **Movement_Controls** is a Scene that can be attached to a canvas, like any other
