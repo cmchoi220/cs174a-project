@@ -331,11 +331,32 @@ const Regular_2D_Polygon = defs.Regular_2D_Polygon =
         }
     }
 
+const FortyFiveDegree2D_Polygon = defs.FortyFiveDegree2D_Polygon =
+    class FortyFiveDegree2D_Polygon extends Surface_Of_Revolution {
+        // Approximates a 45-degree arc of a flat disk
+        constructor(rows, columns) {
+            // Vector3.cast([0, 0, 0], [1, 0, 0]) defines the radial line from the origin to the edge of the circle
+            super(rows, columns, Vector3.cast([0, 0, 0], [1, 0, 0]), undefined, Math.PI / 4);  // Math.PI / 4 radians equals 45 degrees
+            this.arrays.normal = this.arrays.normal.map(x => vec3(0, 0, 1));
+            this.arrays.texture_coord.forEach((x, i, a) => a[i] = this.arrays.position[i].map(x => x / 2 + .5).slice(0, 2));
+        }
+    }
+
 const Cylindrical_Tube = defs.Cylindrical_Tube =
     class Cylindrical_Tube extends Surface_Of_Revolution {
         // An open tube shape with equally sized sections, pointing down Z locally.
         constructor(rows, columns, texture_range) {
             super(rows, columns, Vector3.cast([1, 0, .5], [1, 0, -.5]), texture_range);
+        }
+    }
+
+const FortyFiveDegreeCylindrical_Tube = defs.FortyFiveDegreeCylindrical_Tube =
+    class FortyFiveDegreeCylindrical_Tube extends Surface_Of_Revolution {
+        // A 45-degree open tube shape with equally sized sections, pointing down Z locally.
+        constructor(rows, columns, texture_range) {
+            // Vector3.cast([1, 0, .5], [1, 0, -.5]) defines the circular cross-section of the tube.
+            // The last parameter, Math.PI / 4, sets the total curvature angle to 45 degrees.
+            super(rows, columns, Vector3.cast([1, 0, .5], [1, 0, -.5]), texture_range, Math.PI / 4);
         }
     }
 
@@ -800,6 +821,49 @@ const Fake_Bump_Map = defs.Fake_Bump_Map =
                     // Compute the final color with contributions from lights:
                     gl_FragColor.xyz += phong_model_lights( normalize( bumped_N ), vertex_worldspace );
                   } `;
+        }
+    }
+
+
+const Realistic_Bump_Map = defs.Realistic_Bump_Map =
+    class Realistic_Bump_Map extends Textured_Phong {
+        // Override the fragment shader to use the normal map for normal perturbation.
+        fragment_glsl_code() {
+            return this.shared_glsl_code() + `
+                varying vec2 f_tex_coord;
+                uniform sampler2D texture;   // The color texture
+                uniform sampler2D normal_map; // The normal map
+    
+                void main(){
+                    // Sample the normal map in the correct place:
+                    vec3 tex_normal = texture2D( normal_map, f_tex_coord ).rgb;
+                    
+                    // Transform normal from [0,1] range to [-1,1] (the normal map is usually stored in a way that (0.5, 0.5, 1.0)
+                    // is mapped to (0, 0, 1) in normal space, which corresponds to no perturbation).
+                    vec3 bumped_N = normalize(2.0 * tex_normal - 1.0);
+    
+                    // Sample the texture image in the correct place:
+                    vec4 tex_color = texture2D( texture, f_tex_coord );
+                    if( tex_color.w < .01 ) discard;
+    
+                    // Compute an initial (ambient) color:
+                    gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                    // Compute the final color with contributions from lights:
+                    gl_FragColor.xyz += phong_model_lights( bumped_N, vertex_worldspace );
+                }`;
+        }
+
+        // Make sure to bind and activate the normal map texture in the update_GPU method.
+        update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
+            // First call the base class method
+            super.update_GPU(context, gpu_addresses, gpu_state, model_transform, material);
+
+            if(material.normal_map && material.normal_map.ready) {
+                // Assuming texture unit 1 is available and not conflicting with other textures.
+                context.activeTexture(context.TEXTURE1);
+                context.bindTexture(context.TEXTURE_2D, material.normal_map.id);
+                context.uniform1i(gpu_addresses.normal_map, 1);
+            }
         }
     }
 
