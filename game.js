@@ -17,7 +17,8 @@ export class Test_Data {
 			// Basketball Court and Ball Textures
 			court: new Texture("assets/court.gif"),
 			basketball: new Texture("assets/basketball.gif"),
-			ring: new Texture("assets/ring.png"),
+			reign: new Texture("assets/reign.jpeg"),
+			gold: new Texture("assets/gold.png"),
 			mouse: new Texture("assets/biggiecheese.jpeg"),
 			mysunshine: new Texture("assets/mysunshine.jpeg"),
 			cheese1: new Texture("assets/cheese_1.jpeg"),
@@ -57,6 +58,7 @@ export class Game extends Simulation {
 		this.shapes = Object.assign({}, this.data.shapes);
 		this.shapes.square = new defs.Square();
 		this.shapes.cube = new defs.Cube();
+		this.shapes.simpletube = new defs.Cylindrical_Tube(4, 4, [[0, 0], [0, 1]]);
 		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
 		this.shapes.sphere = new defs.Subdivision_Sphere(1);
 		this.shapes.circle = new defs.Regular_2D_Polygon(16, 16);
@@ -74,8 +76,10 @@ export class Game extends Simulation {
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.court }),
 			mysunshine: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mysunshine }),
-			ring: new Material(new defs.Fake_Bump_Map(1),
-				{ color: color(0, 0, 0, 1), ambient: 0.8, diffusivity: 0.4, specularity: 0.1, texture: this.data.textures.ring }),
+			reign: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.8, diffusivity: 0.4, specularity: 0.1, texture: this.data.textures.reign }),
+			gold: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.8, diffusivity: 0.4, specularity: 0.1, texture: this.data.textures.gold }),
 			dark_ground: new Material(new defs.Phong_Shader(),
 				{ color: color(0.4, 0.4, 0.4, 1), ambient: 0.2, diffusivity: 1, specularity: 1 }),
 			dark_ground2: new Material(new defs.Phong_Shader(1),
@@ -386,7 +390,7 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.platform);
 
-		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
+		this.goal = new SolidBody(this.shapes.simpletube, this.materials.reign, vec3(3, 3, 3))
 			.emplace(Mat4.translation(-20, 4, 20).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.goal);
 
@@ -403,8 +407,8 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
-		// Goal with Lebron wearing it like a crown
-		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
+		// Goal with Lebron wearing it like a gold crown
+		this.goal = new SolidBody(this.shapes.tube, this.materials.gold, vec3(3, 3, 3))
 			.emplace(Mat4.translation(21, 4, 39).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
 		this.bodies.push(this.goal);
 
