@@ -18,6 +18,10 @@ export class Test_Data {
 			court: new Texture("assets/court.gif"),
 			basketball: new Texture("assets/basketball.gif"),
 			ring: new Texture("assets/ring.png"),
+			mouse: new Texture("assets/biggiecheese.jpeg"),
+			mysunshine: new Texture("assets/mysunshine.jpeg"),
+			cheese1: new Texture("assets/cheese_1.jpeg"),
+			wood: new Texture("assets/wood.jpg"),
 		}
 		this.shapes = {
 			ball: new defs.Subdivision_Sphere(3, [[0, 1], [0, 1]]),
@@ -55,29 +59,46 @@ export class Game extends Simulation {
 		this.shapes.cube = new defs.Cube();
 		this.shapes.tube = new defs.Cylindrical_Tube(16, 16, [[0, 0], [0, 1]]);
 		this.shapes.sphere = new defs.Subdivision_Sphere(1);
+		this.shapes.circle = new defs.Regular_2D_Polygon(16, 16);
+		this.shapes.arc = new defs.FortyFiveDegree2D_Polygon(16, 16);
+		this.shapes.curvededge = new defs.FortyFiveDegreeCylindrical_Tube(1, 1);
 
 		this.materials = {
 			test: new Material(new defs.Fake_Bump_Map(1),
-				{ color: color(.4, .8, .4, 1), ambient: .4, texture: this.data.textures.stars }),
+				{ color: color(.4, .4, .4, 1), ambient: .4, texture: this.data.textures.stars }),
 			bright: new Material(new defs.Phong_Shader(1),
 				{ color: color(0, 1, 0, .5), ambient: 1 }),
 			basketball: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.basketball }),
 			court: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.court }),
+			mysunshine: new Material(new defs.Fake_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mysunshine }),
 			ring: new Material(new defs.Fake_Bump_Map(1),
 				{ color: color(0, 0, 0, 1), ambient: 0.8, diffusivity: 0.4, specularity: 0.1, texture: this.data.textures.ring }),
 			dark_ground: new Material(new defs.Phong_Shader(),
 				{ color: color(0.4, 0.4, 0.4, 1), ambient: 0.2, diffusivity: 1, specularity: 1 }),
+			dark_ground2: new Material(new defs.Phong_Shader(1),
+				{ color: color(0.4, 0.4, 0.4, 1), ambient: 0.2, diffusivity: .4, specularity: .4 }),
 			dark_ball: new Material(new defs.Phong_Shader(),
 				{ color: color(1, 1, 1, 1), ambient: 1, diffusivity: 1, specularity: 1 }),
 			gem: new Material(new defs.Phong_Shader(),
 				{ color: color(1, 0, 0, .9), ambient: .4, diffusivity: 1, specularity: 1 }),
+			light_ground: new Material(new defs.Phong_Shader(),
+				{ color: color(0.98, 0.98, 0.98, 1), ambient: 0.8, diffusivity: 1, specularity: 0 }),
+			mouse: new Material(new defs.Realistic_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.mouse }),
+			cheese1: new Material(new defs.Realistic_Bump_Map(1),
+				{ color: color(0, 0, 0, 1), ambient: 0.9, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.cheese1 }),
+			wood: new Material(new defs.Realistic_Bump_Map(1),
+				{ color: color(.2, .2, .2, 1), ambient: 0.4, diffusivity: 0.1, specularity: 0.1, texture: this.data.textures.wood }),
+
+
 		};
 
 		this.level_to_draw = this.level1;
 		this.level_loaded = false;
-		this.ball_color = this.general_ball_color;
+		this.ball_color = this.level1_ball_color;
 
 		this.collider = { intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1 };
 		this.show_bounding_boxes = false;
@@ -123,7 +144,7 @@ export class Game extends Simulation {
 	}
 
 	level3_ball_color() {
-		return this.materials.test.override(this.data.textures.stars);
+		return this.materials.mouse;
 	}
 
 
@@ -219,8 +240,11 @@ export class Game extends Simulation {
 					case this.level2:
 						this.level_to_draw = this.level3; this.ball_color = this.level3_ball_color; this.level_loaded = false;
 						break;
+					case this.level3:
+						this.level_to_draw = this.level1; this.ball_color = this.level1_ball_color; this.level_loaded = false;
+						break;
 					default:
-						this.level_to_draw = this.level0; this.ball_color = this.level3_ball_color; this.level_loaded = false;
+						this.level_to_draw = this.level0; this.ball_color = this.general_ball_color; this.level_loaded = false;
 				}
 				this.bonus_balls = 20;
 				break;
@@ -379,6 +403,14 @@ export class Game extends Simulation {
 			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
 		this.bodies.push(this.platform);
 
+		// Goal with Lebron wearing it like a crown
+		this.goal = new SolidBody(this.shapes.tube, this.materials.ring, vec3(3, 3, 3))
+			.emplace(Mat4.translation(21, 4, 39).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.goal);
+
+		this.bodies.push(new SolidBody(this.shapes.circle, this.materials.mysunshine, vec3(3, 3, 3))
+			.emplace(Mat4.translation(21, 4, 39).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
 		// Walls
 		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.court, vec3(29.5, 5, 1))
 			.emplace(Mat4.translation(0, 0, -29.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
@@ -461,6 +493,231 @@ export class Game extends Simulation {
 	}
 
 	level3() {
+		// Base
+		this.platform = new SolidBody(this.shapes.cube, this.materials.wood, vec3(50, 1, 50))
+			.emplace(Mat4.translation(0, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0))
+		this.bodies.push(this.platform);
+
+		// Goal being a block of cheese
+		// Bottom
+		this.bodies.push(new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(20, 1.5, -22.5).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Top
+		this.bodies.push(new SolidBody(this.shapes.arc, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(20, 6.5, -22.5).times(Mat4.rotation(-Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		// Curved Edge
+		this.goal = new SolidBody(this.shapes.curvededge, this.materials.cheese1, vec3(5, 5, 5))
+			.emplace(Mat4.translation(20, 4, -22.5).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0));
+		this.bodies.push(this.goal);
+		// Other Two Edges
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5 / 2, 5 / 2, 1))
+			.emplace(Mat4.translation(22.5, 4, -22.5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.square, this.materials.cheese1, vec3(5 / 2, 5 / 2, 1))
+			.emplace(Mat4.translation(21.75, 4, -24.25).times(Mat4.rotation(Math.PI / 4, 0, 1, 0)), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		// Horizontal Walls
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-35, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-35, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-35, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-35, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-25, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-15, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground, vec3(5, 5, 1))
+		//.emplace(Mat4.translation(-15, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-15, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-5, 0, 20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(-5, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(5, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(5, 0, 10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(5, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(15, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(15, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+		//.emplace(Mat4.translation(15, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(15, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(15, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, 20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, -30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(25, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(35, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(35, 0, 30), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(35, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+		//.emplace(Mat4.translation(35, 0, -20), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(35, 0, -40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(45, 0, 40), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(5, 5, 1))
+			.emplace(Mat4.translation(45, 0, -10), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		// Vertical Walls
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(0, 0, -45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, -45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-30, 0, -35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(0, 0, -35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(10, 0, -35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(40, 0, -35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-10, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(0, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(10, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(30, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(40, 0, -25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-30, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(0, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		//this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+		//.emplace(Mat4.translation(20, 0, -15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-10, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(10, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(30, 0, -5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(10, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(30, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(40, 0, 5), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-30, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-10, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(10, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(40, 0, 15), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, 25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-20, 0, 25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, 25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(40, 0, 25), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-40, 0, 35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-10, 0, 35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(0, 0, 35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(30, 0, 35), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(-10, 0, 45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 5))
+			.emplace(Mat4.translation(20, 0, 45), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+
+		// Edges
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(50, 5, 1))
+			.emplace(Mat4.translation(0, 0, 50), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(50, 5, 1))
+			.emplace(Mat4.translation(0, 0, -50), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 50))
+			.emplace(Mat4.translation(50, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
+
+		this.bodies.push(new SolidBody(this.shapes.cube, this.materials.dark_ground2, vec3(1, 5, 50))
+			.emplace(Mat4.translation(-50, 0, 0), vec3(0, 0, 0), 0, vec3(1, 0, 0)));
 
 	}
 
